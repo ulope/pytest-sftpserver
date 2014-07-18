@@ -2,6 +2,22 @@
 pytest-sftpserver
 =================
 
+.. image:: https://pypip.in/version/pytest-sftpserver/badge.svg
+    :target: https://pypi.python.org/pypi/pytest-sftpserver/
+    :alt: Latest Version
+.. image:: https://travis-ci.org/ulope/pytest-sftpserver.svg?branch=master
+    :target: https://travis-ci.org/ulope/pytest-sftpserver
+    :alt: Build status
+.. image:: https://img.shields.io/coveralls/ulope/pytest-sftpserver.svg?branch=master
+    :target: https://coveralls.io/r/ulope/pytest-sftpserver?branch=master
+    :alt: Code coverage
+.. image:: http://img.shields.io/badge/Python-2.6%20%7C%202.7%20%7C%203.3%20%7C%203.4-blue.svg
+    :target: https://pypi.python.org/pypi/pytest-sftpserver/
+    :alt: Supported versions
+.. image:: https://pypip.in/license/pytest-sftpserver/badge.svg
+    :target: https://pypi.python.org/pypi/pytest-sftpserver/
+    :alt: License
+
 pytest-sftpserver is a plugin for `pytest`_ that provides a local SFTP-Server
 `fixture`_.
 
@@ -11,7 +27,9 @@ directly from Python objects.
 Quickstart
 ==========
 
-Assume you want to test a function that downloads a file from an SFTP-Server::
+Assume you want to test a function that downloads a file from an SFTP-Server:
+
+.. code-block:: python
 
     from contextlib import closing
     import paramiko
@@ -24,7 +42,9 @@ Assume you want to test a function that downloads a file from an SFTP-Server::
 
 This plugin allows to test such functions without having to spin up an external
 SFTP-Server by providing a pytest `fixture`_ called `sftpserver`. You use it
-simply by adding a parameter named `sftpserver` to your test function::
+simply by adding a parameter named `sftpserver` to your test function:
+
+.. code-block:: python
 
     def test_sftp_fetch(sftpserver):
         with sftpserver.serve_content({'a_dir': {'somefile.txt': "File content"}}):
