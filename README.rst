@@ -2,19 +2,19 @@
 pytest-sftpserver
 =================
 
-.. image:: https://pypip.in/version/pytest-sftpserver/badge.svg
+.. image:: https://pypip.in/version/pytest-sftpserver/badge.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: Latest Version
-.. image:: https://travis-ci.org/ulope/pytest-sftpserver.svg?branch=master
+.. image:: http://img.shields.io/travis/ulope/pytest-sftpserver.svg?branch=master&style=flat
     :target: https://travis-ci.org/ulope/pytest-sftpserver
     :alt: Build status
-.. image:: https://img.shields.io/coveralls/ulope/pytest-sftpserver.svg?branch=master
+.. image:: https://img.shields.io/coveralls/ulope/pytest-sftpserver.svg?branch=master&style=flat
     :target: https://coveralls.io/r/ulope/pytest-sftpserver?branch=master
     :alt: Code coverage
-.. image:: http://img.shields.io/badge/Python-2.6%20%7C%202.7%20%7C%203.3%20%7C%203.4-blue.svg
+.. image:: https://pypip.in/py_versions/pytest-sftpserver/badge.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: Supported versions
-.. image:: https://pypip.in/license/pytest-sftpserver/badge.svg
+.. image:: https://pypip.in/license/pytest-sftpserver/badge.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: License
 
