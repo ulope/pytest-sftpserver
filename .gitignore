@@ -1,2 +1,4 @@
 .tox
 .coverage
+htmlcov_*
+coverage_*.xml

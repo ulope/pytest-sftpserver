@@ -1,5 +1,7 @@
 from copy import deepcopy
+
 import pytest
+
 from pytest_sftpserver.sftp.content_provider import ContentProvider
 
 

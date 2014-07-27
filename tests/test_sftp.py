@@ -16,8 +16,6 @@ CONTENT_OBJ = dict(
     d="testfile3"
 )
 
-pytest_plugins = "pytest_sftpserver.plugin"
-
 
 @pytest.yield_fixture
 def sftpclient(sftpserver):
@@ -36,7 +34,7 @@ def content(sftpserver):
 
 
 def test_sftpserver_bound(sftpserver):
-    assert sftpserver.wait_for_bind()
+    assert sftpserver.wait_for_bind(1)
 
 
 def test_sftpserver_available(sftpserver):
