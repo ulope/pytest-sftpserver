@@ -61,6 +61,14 @@ Installation
     pip install pytest-sftpserver
 
 
+Supported Python versions
+=========================
+
+This package supports the following Python versions:
+
+- 2.6 - 2.7
+- 3.2 - 3.4
+
 TODO
 ====
 
