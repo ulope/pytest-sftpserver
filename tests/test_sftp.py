@@ -3,6 +3,7 @@ from paramiko import Transport
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_client import SFTPClient
 import pytest
+import sys
 
 from pytest_sftpserver.sftp.server import SFTPServer
 
@@ -33,6 +34,7 @@ def content(sftpserver):
         yield
 
 
+@pytest.mark.xfail(sys.version_info < (2, 7), reason="Intermittently broken on 2.6")
 def test_sftpserver_bound(sftpserver):
     assert sftpserver.wait_for_bind(1)
 
