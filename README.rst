@@ -77,6 +77,35 @@ TODO
 - Add TODOs :)
 
 
+Version History
+===============
+
+1.1.0 - 2014-10-15
+------------------
+
+- Fixed broken `stat()` behaviour for non-existing 'files'
+- Slightly increased test coverage
+
+
+1.0.2 - 2014-07-27
+------------------
+
+- Fixed broken test on Python 2.6
+
+
+1.0.1 - 2014-07-27
+------------------
+
+- Added Python 3.2 support
+- Clened up tox configuration
+
+
+1.0.0 - 2014-07-18
+------------------
+
+- Initial release
+
+
 License
 =======
 Licensed unter the MIT License. See file `LICENSE`.
