@@ -1,5 +1,6 @@
 from copy import deepcopy
 from paramiko import Transport
+from paramiko.channel import Channel
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_client import SFTPClient
 import pytest
@@ -46,7 +47,7 @@ def test_sftpserver_available(sftpserver):
 
 
 def test_sftpserver_connect(sftpclient):
-    assert isinstance(sftpclient.stat("/"), SFTPAttributes)
+    assert isinstance(sftpclient.sock, Channel)
 
 
 def test_sftpserver_listdir_empty(sftpclient):
@@ -91,14 +92,29 @@ def test_sftpserver_remove_file_dict(content, sftpclient):
     assert set(sftpclient.listdir("/a")) == set(["b", "f"])
 
 
+def test_sftpserver_remove_file_list(content, sftpclient):
+    sftpclient.remove("/a/f/1")
+    assert set(sftpclient.listdir("/a/f")) == set(["0"])
+
+
+def test_sftpserver_remove_file_list_fail(content, sftpclient):
+    with pytest.raises(IOError):
+        sftpclient.remove("/a/f/10")
+
+
 def test_sftpserver_rename_file(content, sftpclient):
     sftpclient.rename("/a/c", "/a/x")
     assert set(sftpclient.listdir("/a")) == set(["b", "f", "x"])
 
 
-def test_sftpserver_rename_file_fail(content, sftpclient):
+def test_sftpserver_rename_file_fail_source(content, sftpclient):
     with pytest.raises(IOError):
         sftpclient.rename("/a/NOTHERE", "/a/x")
+
+
+def test_sftpserver_rename_file_fail_target(content, sftpclient):
+    with pytest.raises(IOError):
+        sftpclient.rename("/a/c", "/a/NOTHERE/x")
 
 
 def test_sftpserver_rmdir(content, sftpclient):
@@ -121,5 +137,10 @@ def test_sftpserver_chmod(content, sftpclient):
 def test_sftpserver_exception(sftpclient, sftpserver):
     with sftpserver.serve_content({'a': lambda: 1/0}):
         with pytest.raises(IOError):
-            with sftpclient.open("/a", 'r') as f:
-                pass
+            sftpclient.open("/a", 'r')
+
+
+def test_sftpserver_stat_non_existing(sftpclient, sftpserver):
+    with sftpserver.serve_content({}):
+        with pytest.raises(IOError):
+            sftpclient.stat("/a")

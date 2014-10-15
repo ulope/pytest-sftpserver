@@ -45,6 +45,8 @@ class ContentProvider(object):
             if name < len(obj):
                 del obj[name]
                 return True
+            else:
+                return False
         else:
             try:
                 delattr(obj, name)

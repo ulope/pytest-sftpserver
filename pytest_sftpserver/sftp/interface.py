@@ -23,7 +23,7 @@ class VirtualSFTPHandle(SFTPHandle):
         super(VirtualSFTPHandle, self).__init__()
         self.path = path
         self.content_provider = content_provider
-        if not self.content_provider.get(self.path) and flags and flags & O_CREAT == O_CREAT:
+        if self.content_provider.get(self.path) is None and flags and flags & O_CREAT == O_CREAT:
             # Create new empty "file"
             self.content_provider.put(path, "")
 
@@ -39,9 +39,15 @@ class VirtualSFTPHandle(SFTPHandle):
         return SFTP_OK if self.content_provider.put(self.path, data) else SFTP_NO_SUCH_FILE
 
     def read(self, offset, length):
+        if self.content_provider.get(self.path) is None:
+            return SFTP_NO_SUCH_FILE
+
         return str(self.content_provider.get(self.path))[offset:offset + length]
 
     def stat(self):
+        if self.content_provider.get(self.path) is None:
+            return SFTP_NO_SUCH_FILE
+
         mtime = calendar.timegm(datetime.now().timetuple())
 
         sftp_attrs = SFTPAttributes()
@@ -87,14 +93,13 @@ class VirtualSFTPServerInterface(SFTPServerInterface):
         return SFTP_OK if self.content_provider.remove(path) else SFTP_NO_SUCH_FILE
 
     @abspath
-    def rename(self, oldpath, newpath, copy=False):
+    def rename(self, oldpath, newpath):
         content = self.content_provider.get(oldpath)
         if not content:
             return SFTP_NO_SUCH_FILE
         res = self.content_provider.put(newpath, content)
         if res:
-            if not copy:
-                res = res and self.content_provider.remove(oldpath)
+            res = res and self.content_provider.remove(oldpath)
         return SFTP_OK if res else SFTP_FAILURE
 
     @abspath
