@@ -31,6 +31,9 @@ class VirtualSFTPHandle(SFTPHandle):
         return SFTP_OK
 
     def chattr(self, attr):
+        if self.content_provider.get(self.path) is None:
+            return SFTP_NO_SUCH_FILE
+
         return SFTP_OK
 
     def write(self, offset, data):
@@ -114,8 +117,9 @@ class VirtualSFTPServerInterface(SFTPServerInterface):
     def stat(self, path):
         return VirtualSFTPHandle(path, self.content_provider).stat()
 
+    @abspath
     def chattr(self, path, attr):
-        return SFTP_OK
+        return VirtualSFTPHandle(path, self.content_provider).chattr(attr)
 
 
 class AllowAllAuthHandler(ServerInterface):

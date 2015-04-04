@@ -144,3 +144,9 @@ def test_sftpserver_stat_non_existing(sftpclient, sftpserver):
     with sftpserver.serve_content({}):
         with pytest.raises(IOError):
             sftpclient.stat("/a")
+
+
+def test_sftpserver_chmod_non_existing(sftpclient, sftpserver):
+    with sftpserver.serve_content({}):
+        with pytest.raises(IOError):
+            sftpclient.chmod("/a", 600)
