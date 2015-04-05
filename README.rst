@@ -80,6 +80,12 @@ TODO
 Version History
 ===============
 
+1.1.1 - 2015-04-04
+------------------
+
+- Fixed broken `chmod()` behaviour for non-existing 'files' (Thanks @dundeemt)
+
+
 1.1.0 - 2014-10-15
 ------------------
 
