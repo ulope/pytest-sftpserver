@@ -5,9 +5,16 @@ import pytest
 from pytest_sftpserver.sftp.content_provider import ContentProvider
 
 
+class Inner(object):
+    def __init__(self):
+        self.something = "a"
+
+
 class _TestObj(object):
     def __init__(self):
         self.x = "testfile7"
+        self.inner = Inner()
+
 
 _CONTENT_OBJ = dict(
     a=dict(
@@ -55,8 +62,14 @@ def test_put_list(content_provider):
 
 def test_put_obj(content_provider):
     assert content_provider.put("/o/y", "testfile8")
-    assert set(content_provider.list("/o")) == set(["x", "y"])
+    assert set(content_provider.list("/o")) == set(["x", "y", "inner"])
     assert content_provider.get("/o/y") == "testfile8"
+
+
+def test_put_obj_nested(content_provider):
+    assert content_provider.put("/o/inner/y", "testfile9")
+    assert set(content_provider.list("/o/inner")) == set(["y", "something"])
+    assert content_provider.get("/o/inner/y") == "testfile9"
 
 
 def test_put_fail(content_provider):
@@ -79,7 +92,12 @@ def test_remove_list(content_provider):
 
 def test_remove_obj(content_provider):
     assert content_provider.remove("/o/x")
-    assert set(content_provider.list("/o")) == set()
+    assert set(content_provider.list("/o")) == set(['inner'])
+
+
+def test_remove_obj_nested(content_provider):
+    assert content_provider.remove("/o/inner/something")
+    assert set(content_provider.list("/o/inner")) == set()
 
 
 def test_remove_obj_fail(content_provider):
