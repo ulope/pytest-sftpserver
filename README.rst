@@ -80,6 +80,16 @@ TODO
 Version History
 ===============
 
+1.1.2 - 2015-06-01
+------------------
+
+- Fixed a bug in stat size calculation (#4)
+- Fixed mkdir() overwriting existing content (#5)
+
+
+Thanks to @zerok for both bug reports and accompanying tests.
+
+
 1.1.1 - 2015-04-04
 ------------------
 
