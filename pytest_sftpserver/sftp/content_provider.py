@@ -68,7 +68,10 @@ class ContentProvider(object):
         return not isinstance(self.get(path), string_types + integer_types)
 
     def get_size(self, path):
-        return len(str(self.get(path)))
+        try:
+            return len(self.get(path))
+        except TypeError:
+            return len(str(self.get(path)))
 
     def _find_object_for_path(self, path):
         if not self.content_object:
