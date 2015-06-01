@@ -87,6 +87,13 @@ def test_sftpserver_put_file_list(content, sftpclient):
     assert set(sftpclient.listdir("/a/f")) == set(["0", "1", "2"])
 
 
+def test_sftpserver_put_file(content, sftpclient, tmpdir):
+    tmpfile = tmpdir.join('test.txt')
+    tmpfile.write('Hello world')
+    sftpclient.put(str(tmpfile), '/a/test.txt')
+    assert set(sftpclient.listdir('/a')) == set(['test.txt', 'b', 'c', 'f'])
+
+
 def test_sftpserver_remove_file_dict(content, sftpclient):
     sftpclient.remove("/a/c")
     assert set(sftpclient.listdir("/a")) == set(["b", "f"])
