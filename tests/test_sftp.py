@@ -19,7 +19,7 @@ CONTENT_OBJ = dict(
 )
 
 
-@pytest.yield_fixture
+@pytest.yield_fixture(scope='session')
 def sftpclient(sftpserver):
     transport = Transport((sftpserver.host, sftpserver.port))
     transport.connect(username="a", password="b")

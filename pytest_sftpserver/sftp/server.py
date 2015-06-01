@@ -38,7 +38,7 @@ class SFTPRequestHandler(StreamRequestHandler):
 
         # Keep the thread alive until the client is done
         while transport.is_active():
-            sleep(.5)
+            sleep(.01)
 
     @property
     def host_key(self):
