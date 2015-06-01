@@ -111,6 +111,8 @@ class VirtualSFTPServerInterface(SFTPServerInterface):
 
     @abspath
     def mkdir(self, path, attr):
+        if self.content_provider.get(path) is not None:
+            return SFTP_FAILURE
         return SFTP_OK if self.content_provider.put(path, {}) else SFTP_FAILURE
 
     @abspath
