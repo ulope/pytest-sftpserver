@@ -135,15 +135,9 @@ def test_sftpserver_mkdir(content, sftpclient):
 
 
 def test_sftpserver_mkdir_existing(content, sftpclient):
-    """
-    Executing mkdir on an existing directory path should raise an IOError
-    indicating that the directory already exists without affecting the
-    content of the existing directory.
-    """
     with pytest.raises(IOError):
         sftpclient.mkdir('/a')
     assert set(sftpclient.listdir("/a")) == set(["b", "c", "f"])
-
 
 
 def test_sftpserver_chmod(content, sftpclient):
@@ -151,6 +145,11 @@ def test_sftpserver_chmod(content, sftpclient):
     sftpclient.chmod("/a/b", 1)
     with sftpclient.open("/a/b", 'r') as f:
         f.chmod(1)
+
+
+def test_sftpserver_stat_non_str(sftpserver, sftpclient):
+    with sftpserver.serve_content(dict(a=123)):
+        assert sftpclient.stat("/a").st_size == 3
 
 
 def test_sftpserver_exception(sftpclient, sftpserver):
