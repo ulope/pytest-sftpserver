@@ -5,15 +5,10 @@ from __future__ import division
 
 import pytest
 
-from pytest_sftpserver.sftp.server import SFTPServer
+from pytest_sftpserver.core import SFTPServerContextDecorator
 
 
 @pytest.yield_fixture(scope="session")
 def sftpserver(request):
-    server = SFTPServer()
-    server.start()
-
-    yield server
-
-    if server.is_alive():
-        server.shutdown()
+    with SFTPServerContextDecorator() as server:
+        yield server
