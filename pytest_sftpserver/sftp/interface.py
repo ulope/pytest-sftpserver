@@ -5,7 +5,6 @@ from __future__ import division
 
 import calendar
 from datetime import datetime
-# import os
 from os import O_CREAT
 import posixpath
 import stat
