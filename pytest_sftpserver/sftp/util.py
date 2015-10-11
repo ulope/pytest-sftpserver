@@ -5,11 +5,11 @@ from __future__ import division
 
 from functools import wraps
 from pytest_sftpserver.compat import getcallargs
-import os
+import posixpath
 
 
 def _mkabspath(path):
-    return os.path.abspath(os.path.join("/", path))
+    return posixpath.abspath(posixpath.join("/", path))
 
 
 def abspath(func):

@@ -5,8 +5,9 @@ from __future__ import division
 
 import calendar
 from datetime import datetime
-import os
+# import os
 from os import O_CREAT
+import posixpath
 import stat
 
 from paramiko import ServerInterface, AUTH_SUCCESSFUL, OPEN_SUCCEEDED
@@ -69,7 +70,7 @@ class VirtualSFTPHandle(SFTPHandle):
         )
         sftp_attrs.st_atime = mtime
         sftp_attrs.st_mtime = mtime
-        sftp_attrs.filename = os.path.basename(self.path)
+        sftp_attrs.filename = posixpath.basename(self.path)
         return sftp_attrs
 
 
@@ -82,7 +83,7 @@ class VirtualSFTPServerInterface(SFTPServerInterface):
     @abspath
     def list_folder(self, path):
         return [
-            self.stat(os.path.join(path, fname))
+            self.stat(posixpath.join(path, fname))
             for fname
             in self.content_provider.list(path)
         ]
