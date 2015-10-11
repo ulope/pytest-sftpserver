@@ -1,0 +1,77 @@
+environment:
+  matrix:
+    # Each matrix entry results in its own evironment, it is ok to have non
+    # unique TESTENV variables set
+    # Pre-installed Python versions, which Appveyor may upgrade to
+    # a later point release.
+
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.x" # currently 2.7.9
+      PYTHON_ARCH: "32"
+      TESTENV: "py27"
+
+    # - PYTHON: "C:\\Python27-x64"
+    #   PYTHON_VERSION: "2.7.x" # currently 2.7.9
+    #   PYTHON_ARCH: "64"
+    #   TESTENV: "py27"
+
+    # - PYTHON: "C:\\Python33"
+    #   PYTHON_VERSION: "3.3.x" # currently 3.3.5
+    #   PYTHON_ARCH: "32"
+    #   TESTENV: "py33"
+
+    # - PYTHON: "C:\\Python33-x64"
+    #   PYTHON_VERSION: "3.3.x" # currently 3.3.5
+    #   PYTHON_ARCH: "64"
+    #   TESTENV: "py33"
+
+    # - PYTHON: "C:\\Python34"
+    #   PYTHON_VERSION: "3.4.x" # currently 3.4.3
+    #   PYTHON_ARCH: "32"
+    #   TESTENV: "py34"
+
+    # - PYTHON: "C:\\Python34-x64"
+    #   PYTHON_VERSION: "3.4.x" # currently 3.4.3
+    #   PYTHON_ARCH: "64"
+    #   TESTENV: "py34"
+
+    # - PYTHON: "C:\\Python35"
+    #   PYTHON_VERSION: "3.5.x" # currently 3.5.0
+    #   PYTHON_ARCH: "32"
+    #   TESTENV: "py35"
+
+    # - PYTHON: "C:\\Python35-x64"
+    #   PYTHON_VERSION: "3.5.x" # currently 3.5.0
+    #   PYTHON_ARCH: "64"
+    #   TESTENV: "py35"
+
+
+install:
+  # uncomment the following if you need to see what is there in the environment
+  - ECHO "Filesystem root:"
+  - ps: "ls \"C:/\""
+
+  # - ECHO "Installed SDKs:"
+  # - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
+
+  # Prepend desired Python ver/arch to the PATH
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+  # Check that we have the expected version and architecture for Python
+  - "python --version"
+  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+
+  # Install the build dependencies of the project. If some dependencies contain
+  # compiled extensions and are not provided as pre-built wheel packages,
+  # pip will build them from source using the MSVC compiler matching the
+  # target Python version and architecture. During the test_script phase, tox
+  # will install the dependencies for the project (setup.py) and for testing
+  # (tox.ini).  This just ensure that pip and tox are at their latest rev.
+  - "python -m pip install --upgrade pip"
+  - "python -m pip install --upgrade tox"
+
+build: false  # Not a C# project, build stuff at the test step instead.
+
+test_script:
+  # Build the compiled extension and run the project tests
+  - "python -m tox -e %TESTENV%"
