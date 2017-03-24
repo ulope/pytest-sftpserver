@@ -68,11 +68,12 @@ def test_sftpserver_get_file_list(content, sftpclient):
         assert f.read() == b"testfile5"
 
 
-def test_sftpserver_write_offset_unsupported(content, sftpclient):
-    with sftpclient.open("/a/f/0", 'w') as f:
-        f.seek(1)
-        with pytest.raises(IOError):
-            f.write("test")
+def test_sftpserver_put_file_offset(content, sftpclient):
+    with sftpclient.open("/a/f/1", 'rw') as f:
+        f.seek(4)
+        f.write("test")
+        f.seek(0)
+        assert f.read() == b"testtest6"
 
 
 def test_sftpserver_put_file_dict(content, sftpclient):
