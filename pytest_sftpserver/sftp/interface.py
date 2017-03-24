@@ -10,7 +10,7 @@ from os import O_CREAT
 import stat
 
 from paramiko import ServerInterface, AUTH_SUCCESSFUL, OPEN_SUCCEEDED
-from paramiko.sftp import SFTP_OK, SFTP_NO_SUCH_FILE, SFTP_FAILURE, SFTP_OP_UNSUPPORTED
+from paramiko.sftp import SFTP_OK, SFTP_NO_SUCH_FILE, SFTP_FAILURE
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 from paramiko.sftp_si import SFTPServerInterface
@@ -37,9 +37,16 @@ class VirtualSFTPHandle(SFTPHandle):
         return SFTP_OK
 
     def write(self, offset, data):
-        if offset != 0:
-            return SFTP_OP_UNSUPPORTED
-        return SFTP_OK if self.content_provider.put(self.path, data) else SFTP_NO_SUCH_FILE
+        content = self.content_provider.get(self.path)
+
+        if not content:
+            return SFTP_OK if self.content_provider.put(self.path, data) else SFTP_NO_SUCH_FILE
+        if offset > len(content):
+            return SFTP_FAILURE
+
+        new_data = content[:offset] + data + content[offset + len(data):]
+        self.content_provider.put(self.path, new_data)
+        return SFTP_OK
 
     def read(self, offset, length):
         if self.content_provider.get(self.path) is None:
