@@ -12,6 +12,7 @@ from paramiko.sftp import SFTP_FAILURE, SFTP_NO_SUCH_FILE, SFTP_OK, SFTP_OP_UNSU
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 from paramiko.sftp_si import SFTPServerInterface
+from six import string_types
 
 from pytest_sftpserver.sftp.util import abspath
 
@@ -35,9 +36,18 @@ class VirtualSFTPHandle(SFTPHandle):
         return SFTP_OK
 
     def write(self, offset, data):
-        if offset != 0:
-            return SFTP_OP_UNSUPPORTED
-        return SFTP_OK if self.content_provider.put(self.path, data) else SFTP_NO_SUCH_FILE
+        content = self.content_provider.get(self.path)
+
+        if content is None:
+            return SFTP_OK if self.content_provider.put(self.path, data) else SFTP_NO_SUCH_FILE
+        if not isinstance(content, string_types):
+            # Can't offset write into a 'directory' or integer
+            return SFTP_FAILURE
+        if offset > len(content):
+            return SFTP_FAILURE
+
+        new_data = content[:offset] + data + content[offset + len(data):]
+        return SFTP_OK if self.content_provider.put(self.path, new_data) else SFTP_FAILURE
 
     def read(self, offset, length):
         if self.content_provider.get(self.path) is None:
