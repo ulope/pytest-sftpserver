@@ -65,7 +65,7 @@ class VirtualSFTPHandle(SFTPHandle):
         if self.content_provider.get(self.path) is None:
             return SFTP_NO_SUCH_FILE
 
-        mtime = calendar.timegm(datetime.now().timetuple())
+        #mtime = calendar.timegm(datetime.now().timetuple())
 
         sftp_attrs = SFTPAttributes()
         sftp_attrs.st_size = self.content_provider.get_size(self.path)
@@ -77,8 +77,8 @@ class VirtualSFTPHandle(SFTPHandle):
             | stat.S_IRWXU
             | (stat.S_IFDIR if self.content_provider.is_dir(self.path) else stat.S_IFREG)
         )
-        sftp_attrs.st_atime = mtime
-        sftp_attrs.st_mtime = mtime
+        (sftp_attrs.st_atime,
+            sftp_attrs.st_mtime) = self.content_provider.get_times(self.path)
         sftp_attrs.filename = posixpath.basename(self.path)
         return sftp_attrs
 

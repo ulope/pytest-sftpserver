@@ -1,30 +1,42 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function
 
-from six import binary_type, integer_types, string_types
+from collections import defaultdict
+import time
+
+from six import string_types, binary_type, integer_types
 
 
 class ContentProvider(object):
     def __init__(self, content_object=None):
         self.content_object = content_object
+        # values: [atime, mtime]
+        # (alphabetical order for easier remembering)
+        self._st_times = defaultdict(lambda : [time.time()] * 2)
 
     def get(self, path):
-        return self._find_object_for_path(path)
+        obj = self._find_object_for_path(path)
+        if obj is not None:
+            self._st_times[self._get_path_components(path)][0] = time.time()
+        return obj
 
     def put(self, path, data):
         path, name = self._get_path_components(path)
         obj = self._find_object_for_path(path)
         if isinstance(obj, dict):
             obj[name] = data
+            self._st_times[(path, name)][1] = time.time()
             return True
         elif isinstance(obj, list) and name.isdigit():
             name = int(name)
             if name > len(obj) - 1:
                 obj.append(data)
             obj[name] = data
+            self._st_times[(path, name)][1] = time.time()
             return True
         try:
             setattr(obj, name, data)
+            self._st_times[(path, name)][1] = time.time()
             return True
         except (TypeError, AttributeError):
             pass
@@ -36,6 +48,7 @@ class ContentProvider(object):
         if isinstance(obj, dict):
             try:
                 del obj[name]
+                self._st_times.pop((path, name), None)
                 return True
             except (KeyError, AttributeError):
                 pass
@@ -43,12 +56,14 @@ class ContentProvider(object):
             name = int(name)
             if name < len(obj):
                 del obj[name]
+                self._st_times.pop((path, name), None)
                 return True
             else:
                 return False
         else:
             try:
                 delattr(obj, name)
+                self._st_times.pop((path, name), None)
                 return True
             except (TypeError, AttributeError):
                 pass
@@ -71,6 +86,9 @@ class ContentProvider(object):
             return len(self.get(path))
         except TypeError:
             return len(str(self.get(path)))
+
+    def get_times(self, path):
+        return self._st_times.get(self._get_path_components(path), None)
 
     def _find_object_for_path(self, path):
         if not self.content_object:
