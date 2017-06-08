@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
+import posixpath
 import time
 
 from six import string_types, binary_type, integer_types
@@ -13,61 +14,102 @@ class ContentProvider(object):
         # values: [atime, mtime]
         # (alphabetical order for easier remembering)
         self._st_times = defaultdict(lambda : [time.time()] * 2)
+        the_time = time.time()
+        # This assumes that we start at '/'. Not sure that is
+        # a valid assumtion.
+        for path, name in self.recursive_list('/'):
+            self._st_times[(path, name)] = [the_time] * 2
 
     def get(self, path):
         obj = self._find_object_for_path(path)
         if obj is not None:
-            self._st_times[self._get_path_components(path)][0] = time.time()
+            path, name = self._get_path_components(path)
+            # update atime, but not mtime
+            self._update_times(path, name, [time.time(), None])
         return obj
 
-    def put(self, path, data):
+    def _update_times(self, path, name, times):
+        if len(times) != 2:
+            raise ValueError("'times' argument must be a length-2 list. Got %r"
+                             % (times,))
+        st_times = self._st_times[(path, name)]
+        # Mutate the list in-place
+        if times[0] is not None:
+            st_times[0] = times[0]
+        if times[1] is not None:
+            st_times[1] = times[1]
+
+    def put(self, path, data, times=None):
+        if times is None:
+            # So don't override atime or mtime...
+            times = [None, None]
+        # Cast it as a list
+        times = list(times)
+
         path, name = self._get_path_components(path)
         obj = self._find_object_for_path(path)
+
+        if times[1] is None:
+            # ... but do update mtime
+            times[1] = time.time()
+
         if isinstance(obj, dict):
             obj[name] = data
-            self._st_times[(path, name)][1] = time.time()
+            self._update_times(path, name, times)
             return True
         elif isinstance(obj, list) and name.isdigit():
+            # Need to be done *before* casting to integer
+            # because code elsewhere won't cast to int
+            # before fetching from the dictionary.
+
+            self._update_times(path, name, times)
             name = int(name)
             if name > len(obj) - 1:
                 obj.append(data)
             obj[name] = data
-            self._st_times[(path, name)][1] = time.time()
             return True
         try:
             setattr(obj, name, data)
-            self._st_times[(path, name)][1] = time.time()
-            return True
         except (TypeError, AttributeError):
-            pass
-        return False
+            return False
+        else:
+            self._update_times(path, name, times)
+            return True
 
     def remove(self, path):
         path, name = self._get_path_components(path)
+        dirpath, dirname = self._get_path_components(path)
         obj = self._find_object_for_path(path)
         if isinstance(obj, dict):
             try:
                 del obj[name]
-                self._st_times.pop((path, name), None)
-                return True
             except (KeyError, AttributeError):
-                pass
+                return False
+            else:
+                self._st_times.pop((path, name), None)
+                self._update_times(dirpath, dirname, [None, time.time()])
+                return True
         elif isinstance(obj, list) and name.isdigit():
+            # Need to be done *before* casting to integer
+            # because code elsewhere won't cast to int
+            # before fetching from the dictionary.
+            self._st_times.pop((path, name), None)
+            self._update_times(dirpath, dirname, [None, time.time()])
             name = int(name)
             if name < len(obj):
                 del obj[name]
-                self._st_times.pop((path, name), None)
                 return True
             else:
                 return False
         else:
             try:
                 delattr(obj, name)
-                self._st_times.pop((path, name), None)
-                return True
             except (TypeError, AttributeError):
-                pass
-        return False
+                return False
+            else:
+                self._st_times.pop((path, name), None)
+                self._update_times(dirpath, dirname, [None, time.time()])
+                return True
 
     def list(self, path):
         obj = self._find_object_for_path(path)
@@ -78,8 +120,20 @@ class ContentProvider(object):
         else:
             return [n for n in dir(obj) if not n.startswith("__")]
 
+    def recursive_list(self, path):
+        subpath, subname = self._get_path_components(path)
+        yield subpath if subpath != '/' else '', subname
+        if self.is_dir(path):
+            for name in self.list(path):
+                fullname = posixpath.join(path, name)
+                for subpath, subname in self.recursive_list(fullname):
+                    yield subpath, subname
+
     def is_dir(self, path):
-        return not isinstance(self.get(path), string_types + integer_types)
+        # Using _find_object_for_path to avoid attribute-setting
+        # that .get() does.
+        return not isinstance(self._find_object_for_path(path),
+                              string_types + integer_types)
 
     def get_size(self, path):
         try:
