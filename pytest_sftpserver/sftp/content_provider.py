@@ -47,6 +47,7 @@ class ContentProvider(object):
         times = list(times)
 
         path, name = self._get_path_components(path)
+        dirpath, dirname = self._get_path_components(path)
         obj = self._find_object_for_path(path)
 
         if times[1] is None:
@@ -54,6 +55,8 @@ class ContentProvider(object):
             times[1] = time.time()
 
         if isinstance(obj, dict):
+            if name not in obj:
+                self._update_times(dirpath, dirname, [None, time.time()])
             obj[name] = data
             self._update_times(path, name, times)
             return True
@@ -61,16 +64,19 @@ class ContentProvider(object):
             # Need to be done *before* casting to integer
             # because code elsewhere won't cast to int
             # before fetching from the dictionary.
-
             self._update_times(path, name, times)
             name = int(name)
             if name > len(obj) - 1:
                 obj.append(data)
+                self._update_times(dirpath, dirname, [None, time.time()])
             obj[name] = data
             return True
         try:
+            if not hasattr(obj, name):
+                self._update_times(dirpath, dirname, [None, time.time()])
             setattr(obj, name, data)
         except (TypeError, AttributeError):
+            self._st_times.pop((dirpath, dirname), None)
             return False
         else:
             self._update_times(path, name, times)
