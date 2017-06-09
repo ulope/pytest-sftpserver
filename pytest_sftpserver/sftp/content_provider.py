@@ -11,6 +11,17 @@ from six import string_types, binary_type, integer_types
 class ContentProvider(object):
     def __init__(self, content_object=None):
         self.content_object = content_object
+
+    @property
+    def content_object(self):
+        return self._content_object
+
+    @content_object.setter
+    def content_object(self, data):
+        self._content_object = data
+        self._rebuild_stat_dict()
+
+    def _rebuild_stat_dict(self):
         # values: [atime, mtime]
         # (alphabetical order for easier remembering)
         self._st_times = defaultdict(lambda : [time.time()] * 2)
@@ -20,9 +31,12 @@ class ContentProvider(object):
         for path, name in self.recursive_list('/'):
             self._st_times[(path, name)] = [the_time] * 2
 
-    def get(self, path):
+    # in rare situations, I don't want to record a change in
+    # atime for fetching an object -- such as using "get" to
+    # test if the file exists.
+    def get(self, path, atime_change=True):
         obj = self._find_object_for_path(path)
-        if obj is not None:
+        if obj is not None and atime_change:
             path, name = self._get_path_components(path)
             # update atime, but not mtime
             self._update_times(path, name, [time.time(), None])
@@ -119,6 +133,10 @@ class ContentProvider(object):
 
     def list(self, path):
         obj = self._find_object_for_path(path)
+        if obj is not None:
+            dirpath, dirname = self._get_path_components(path)
+            self._update_times(dirpath, dirname, [time.time(), None])
+
         if isinstance(obj, dict):
             return obj.keys()
         elif isinstance(obj, (list, tuple)):
@@ -143,9 +161,9 @@ class ContentProvider(object):
 
     def get_size(self, path):
         try:
-            return len(self.get(path))
+            return len(self.get(path, atime_change=False))
         except TypeError:
-            return len(str(self.get(path)))
+            return len(str(self.get(path, atime_change=False)))
 
     def get_times(self, path):
         return self._st_times.get(self._get_path_components(path), None)
