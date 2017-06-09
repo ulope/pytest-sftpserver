@@ -1,11 +1,10 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function
 
-import calendar
+from os import O_CREAT
 import posixpath
 import stat
-from datetime import datetime
-from os import O_CREAT
+import time
 
 from paramiko import AUTH_SUCCESSFUL, OPEN_SUCCEEDED, ServerInterface
 from paramiko.sftp import SFTP_FAILURE, SFTP_NO_SUCH_FILE, SFTP_OK
@@ -18,21 +17,31 @@ from pytest_sftpserver.sftp.util import abspath
 
 
 class VirtualSFTPHandle(SFTPHandle):
-    def __init__(self, path, content_provider, flags=0):
+    def __init__(self, path, content_provider, flags=0, attr=None):
         super(VirtualSFTPHandle, self).__init__()
         self.path = path
         self.content_provider = content_provider
-        if self.content_provider.get(self.path) is None and flags and flags & O_CREAT == O_CREAT:
+        if (self.content_provider.get(self.path, atime_change=False) is None
+                and flags and flags & O_CREAT == O_CREAT):
+            if attr is not None:
+                times = [getattr(attr, 'st_atime', None),
+                         getattr(attr, 'st_mtime', None)]
+            else:
+                times = None
             # Create new empty "file"
-            self.content_provider.put(path, "")
+            self.content_provider.put(path, "", times)
 
     def close(self):
         return SFTP_OK
 
     def chattr(self, attr):
-        if self.content_provider.get(self.path) is None:
+        if self.content_provider.get(self.path, atime_change=False) is None:
             return SFTP_NO_SUCH_FILE
-
+        if hasattr(attr, 'st_atime') or hasattr(attr, 'st_mtime'):
+            times = self.content_provider.get_times(self.path)
+            # Mutates the stored times list in-place
+            times[0] = getattr(attr, 'st_atime', times[0])
+            times[1] = getattr(attr, 'st_mtime', times[1])
         return SFTP_OK
 
     def write(self, offset, data):
@@ -55,17 +64,15 @@ class VirtualSFTPHandle(SFTPHandle):
         return SFTP_OK if self.content_provider.put(self.path, content) else SFTP_FAILURE
 
     def read(self, offset, length):
-        if self.content_provider.get(self.path) is None:
+        if self.content_provider.get(self.path, atime_change=False) is None:
             return SFTP_NO_SUCH_FILE
 
         end = offset + length
         return self.content_provider.get(self.path)[offset:end]
 
     def stat(self):
-        if self.content_provider.get(self.path) is None:
+        if self.content_provider.get(self.path, atime_change=False) is None:
             return SFTP_NO_SUCH_FILE
-
-        #mtime = calendar.timegm(datetime.now().timetuple())
 
         sftp_attrs = SFTPAttributes()
         sftp_attrs.st_size = self.content_provider.get_size(self.path)
@@ -97,7 +104,8 @@ class VirtualSFTPServerInterface(SFTPServerInterface):
 
     @abspath
     def open(self, path, flags, attr):
-        return VirtualSFTPHandle(path, self.content_provider, flags=flags)
+        return VirtualSFTPHandle(path, self.content_provider, flags=flags,
+                                 attr=attr)
 
     @abspath
     def remove(self, path):
@@ -105,10 +113,11 @@ class VirtualSFTPServerInterface(SFTPServerInterface):
 
     @abspath
     def rename(self, oldpath, newpath):
-        content = self.content_provider.get(oldpath)
+        content = self.content_provider.get(oldpath, atime_change=False)
         if not content:
             return SFTP_NO_SUCH_FILE
-        res = self.content_provider.put(newpath, content)
+        oldtimes = self.content_provider.get_times(oldpath)
+        res = self.content_provider.put(newpath, content, oldtimes)
         if res:
             res = res and self.content_provider.remove(oldpath)
         return SFTP_OK if res else SFTP_FAILURE
@@ -119,9 +128,12 @@ class VirtualSFTPServerInterface(SFTPServerInterface):
 
     @abspath
     def mkdir(self, path, attr):
-        if self.content_provider.get(path) is not None:
+        if self.content_provider.get(path, atime_change=False) is not None:
             return SFTP_FAILURE
-        return SFTP_OK if self.content_provider.put(path, {}) else SFTP_FAILURE
+        times = [getattr(attr, 'st_atime', None),
+                 getattr(attr, 'st_mtime', None)]
+        return (SFTP_OK if self.content_provider.put(path, {}, times)
+                else SFTP_FAILURE)
 
     @abspath
     def stat(self, path):
