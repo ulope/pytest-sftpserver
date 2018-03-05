@@ -2,7 +2,7 @@
 pytest-sftpserver
 =================
 
-.. image:: https://pypip.in/version/pytest-sftpserver/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/v/pytest-sftpserver.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: Latest Version
 .. image:: http://img.shields.io/travis/ulope/pytest-sftpserver.svg?branch=master&style=flat
@@ -11,10 +11,10 @@ pytest-sftpserver
 .. image:: https://img.shields.io/coveralls/ulope/pytest-sftpserver.svg?branch=master&style=flat
     :target: https://coveralls.io/r/ulope/pytest-sftpserver?branch=master
     :alt: Code coverage
-.. image:: https://pypip.in/py_versions/pytest-sftpserver/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/pyversions/pytest-sftpserver.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: Supported versions
-.. image:: https://pypip.in/license/pytest-sftpserver/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/l/pytest-sftpserver.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: License
 
