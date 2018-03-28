@@ -17,6 +17,9 @@ pytest-sftpserver
 .. image:: https://img.shields.io/pypi/l/pytest-sftpserver.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: License
+.. image:: https://requires.io/github/ulope/pytest-sftpserver/requirements.svg?branch=master
+     :target: https://requires.io/github/ulope/pytest-sftpserver/requirements/?branch=master
+     :alt: Requirements Status
 
 pytest-sftpserver is a plugin for `pytest`_ that provides a local SFTP-Server
 `fixture`_.
@@ -79,6 +82,15 @@ TODO
 Version History
 ===============
 
+1.2.0 - 2018-03-28
+------------------
+
+- Updated supported Python versions to 2.7, 3.4 - 3.6.
+  Droped (official) support for 2.6 and 3.2, 3.3.
+- Now always uses posixpath internally to avoid problems when running on Windows (#7, #8, thanks @dundeemt)
+- Fixed broken readme badges (#14, thanks @movermeyer)
+
+
 1.1.2 - 2015-06-01
 ------------------
 
@@ -112,7 +124,7 @@ Thanks to @zerok for both bug reports and accompanying tests.
 ------------------
 
 - Added Python 3.2 support
-- Clened up tox configuration
+- Cleaned up tox configuration
 
 
 1.0.0 - 2014-07-18
