@@ -95,6 +95,15 @@ def test_sftpserver_put_file(content, sftpclient, tmpdir):
     assert set(sftpclient.listdir("/a")) == set(["test.txt", "b", "c", "f"])
 
 
+def test_sftpserver_round_trip(content, sftpclient, tmpdir):
+    tmpfile = tmpdir.join("test.txt")
+    thetext = u"Just some plain, normal text"
+    tmpfile.write(thetext)
+    sftpclient.put(str(tmpfile), "/a/test.txt")
+    with sftpclient.open("/a/test.txt", "r") as result:
+        assert result.read() == thetext.encode()
+
+
 def test_sftpserver_remove_file_dict(content, sftpclient):
     sftpclient.remove("/a/c")
     assert set(sftpclient.listdir("/a")) == set(["b", "f"])
