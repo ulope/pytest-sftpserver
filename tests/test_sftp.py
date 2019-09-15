@@ -1,13 +1,14 @@
+import sys
 from copy import deepcopy
+
+import pytest
 from paramiko import Transport
 from paramiko.channel import Channel
 from paramiko.sftp_client import SFTPClient
-import pytest
-import sys
 
 from pytest_sftpserver.sftp.server import SFTPServer
 
-
+# fmt: off
 CONTENT_OBJ = dict(
     a=dict(
         b="testfile1",
@@ -16,9 +17,10 @@ CONTENT_OBJ = dict(
     ),
     d="testfile3"
 )
+# fmt: on
 
 
-@pytest.yield_fixture(scope='session')
+@pytest.yield_fixture(scope="session")
 def sftpclient(sftpserver):
     transport = Transport((sftpserver.host, sftpserver.port))
     transport.connect(username="a", password="b")
@@ -58,39 +60,39 @@ def test_sftpserver_listdir(content, sftpclient):
 
 
 def test_sftpserver_get_file_dict(content, sftpclient):
-    with sftpclient.open("/a/b", 'r') as f:
+    with sftpclient.open("/a/b", "r") as f:
         assert f.read() == b"testfile1"
 
 
 def test_sftpserver_get_file_list(content, sftpclient):
-    with sftpclient.open("/a/f/0", 'r') as f:
+    with sftpclient.open("/a/f/0", "r") as f:
         assert f.read() == b"testfile5"
 
 
 def test_sftpserver_write_offset_unsupported(content, sftpclient):
-    with sftpclient.open("/a/f/0", 'w') as f:
+    with sftpclient.open("/a/f/0", "w") as f:
         f.seek(1)
         with pytest.raises(IOError):
             f.write("test")
 
 
 def test_sftpserver_put_file_dict(content, sftpclient):
-    with sftpclient.open("/e", 'w') as f:
+    with sftpclient.open("/e", "w") as f:
         f.write("testfile4")
     assert set(sftpclient.listdir("/")) == set(["a", "d", "e"])
 
 
 def test_sftpserver_put_file_list(content, sftpclient):
-    with sftpclient.open("/a/f/2", 'w') as f:
+    with sftpclient.open("/a/f/2", "w") as f:
         f.write("testfile7")
     assert set(sftpclient.listdir("/a/f")) == set(["0", "1", "2"])
 
 
 def test_sftpserver_put_file(content, sftpclient, tmpdir):
-    tmpfile = tmpdir.join('test.txt')
-    tmpfile.write('Hello world')
-    sftpclient.put(str(tmpfile), '/a/test.txt')
-    assert set(sftpclient.listdir('/a')) == set(['test.txt', 'b', 'c', 'f'])
+    tmpfile = tmpdir.join("test.txt")
+    tmpfile.write("Hello world")
+    sftpclient.put(str(tmpfile), "/a/test.txt")
+    assert set(sftpclient.listdir("/a")) == set(["test.txt", "b", "c", "f"])
 
 
 def test_sftpserver_remove_file_dict(content, sftpclient):
@@ -135,14 +137,14 @@ def test_sftpserver_mkdir(content, sftpclient):
 
 def test_sftpserver_mkdir_existing(content, sftpclient):
     with pytest.raises(IOError):
-        sftpclient.mkdir('/a')
+        sftpclient.mkdir("/a")
     assert set(sftpclient.listdir("/a")) == set(["b", "c", "f"])
 
 
 def test_sftpserver_chmod(content, sftpclient):
     # coverage
     sftpclient.chmod("/a/b", 1)
-    with sftpclient.open("/a/b", 'r') as f:
+    with sftpclient.open("/a/b", "r") as f:
         f.chmod(1)
 
 
@@ -152,9 +154,9 @@ def test_sftpserver_stat_non_str(sftpserver, sftpclient):
 
 
 def test_sftpserver_exception(sftpclient, sftpserver):
-    with sftpserver.serve_content({'a': lambda: 1/0}):
+    with sftpserver.serve_content({"a": lambda: 1 / 0}):
         with pytest.raises(IOError):
-            sftpclient.open("/a", 'r')
+            sftpclient.open("/a", "r")
 
 
 def test_sftpserver_stat_non_existing(sftpclient, sftpserver):

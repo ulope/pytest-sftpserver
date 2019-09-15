@@ -43,7 +43,8 @@ class VirtualSFTPHandle(SFTPHandle):
         if self.content_provider.get(self.path) is None:
             return SFTP_NO_SUCH_FILE
 
-        return str(self.content_provider.get(self.path))[offset:offset + length]
+        end = offset + length
+        return str(self.content_provider.get(self.path))[offset:end]
 
     def stat(self):
         if self.content_provider.get(self.path) is None:
@@ -56,14 +57,10 @@ class VirtualSFTPHandle(SFTPHandle):
         sftp_attrs.st_uid = 0
         sftp_attrs.st_gid = 0
         sftp_attrs.st_mode = (
-            stat.S_IRWXO |
-            stat.S_IRWXG |
-            stat.S_IRWXU |
-            (
-                stat.S_IFDIR
-                if self.content_provider.is_dir(self.path)
-                else stat.S_IFREG
-            )
+            stat.S_IRWXO
+            | stat.S_IRWXG
+            | stat.S_IRWXU
+            | (stat.S_IFDIR if self.content_provider.is_dir(self.path) else stat.S_IFREG)
         )
         sftp_attrs.st_atime = mtime
         sftp_attrs.st_mtime = mtime
@@ -73,16 +70,14 @@ class VirtualSFTPHandle(SFTPHandle):
 
 class VirtualSFTPServerInterface(SFTPServerInterface):
     def __init__(self, server, *largs, **kwargs):
-        self.content_provider = kwargs.pop('content_provider', None)
+        self.content_provider = kwargs.pop("content_provider", None)
         ":type: ContentProvider"
         super(VirtualSFTPServerInterface, self).__init__(server, *largs, **kwargs)
 
     @abspath
     def list_folder(self, path):
         return [
-            self.stat(posixpath.join(path, fname))
-            for fname
-            in self.content_provider.list(path)
+            self.stat(posixpath.join(path, fname)) for fname in self.content_provider.list(path)
         ]
 
     @abspath

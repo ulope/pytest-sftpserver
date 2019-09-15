@@ -16,6 +16,7 @@ class _TestObj(object):
         self.inner = Inner()
 
 
+# fmt: off
 _CONTENT_OBJ = dict(
     a=dict(
         b="testfile1",
@@ -25,6 +26,7 @@ _CONTENT_OBJ = dict(
     d="testfile3",
     o=_TestObj(),
 )
+# fmt: on
 
 
 @pytest.fixture
@@ -92,7 +94,7 @@ def test_remove_list(content_provider):
 
 def test_remove_obj(content_provider):
     assert content_provider.remove("/o/x")
-    assert set(content_provider.list("/o")) == set(['inner'])
+    assert set(content_provider.list("/o")) == set(["inner"])
 
 
 def test_remove_obj_nested(content_provider):
@@ -127,4 +129,3 @@ def test_get_size(content_provider):
 
 def test_str_and_byte(content_provider):
     assert set(content_provider.list(b"/")) == set(content_provider.list("/"))
-

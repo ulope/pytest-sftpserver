@@ -19,27 +19,24 @@ except ImportError:
     from socketserver import StreamRequestHandler, TCPServer, ThreadingMixIn
 
 
-
-
 class SFTPRequestHandler(StreamRequestHandler):
     def handle(self):
         transport = Transport(self.request)
-        #transport.set_hexdump(True)
         transport.add_server_key(self.host_key)
         transport.set_subsystem_handler(
-            'sftp',
+            "sftp",
             sftp_server.SFTPServer,
             VirtualSFTPServerInterface,
-            content_provider=self.server.content_provider
+            content_provider=self.server.content_provider,
         )
 
         transport.start_server(server=AllowAllAuthHandler())
         # Keep a reference to channel to avoid it getting GCed immediately
-        channel = transport.accept()
+        channel = transport.accept()  # noqa: F841
 
         # Keep the thread alive until the client is done
         while transport.is_active():
-            sleep(.01)
+            sleep(0.01)
 
     @property
     def host_key(self):
@@ -86,7 +83,7 @@ class SFTPServer(Thread, ThreadingMixIn, TCPServer):
     def url(self):
         return "sftp://user:pw@{s.host}:{s.port}/".format(s=self)
 
-    def wait_for_bind(self, timeout=.5):
+    def wait_for_bind(self, timeout=0.5):
         if self._bound.is_set():
             return True
         return self._bound.wait(timeout)

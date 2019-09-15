@@ -45,51 +45,69 @@ except ImportError:
             if func.im_self is not None:
                 arg2value[spec_args.pop(0)] = func.im_self
             elif not args or not isinstance(args[0], func.im_class):
-                got = args and ('%s instance' % type(args[0]).__name__) or 'nothing'
-                raise TypeError('unbound method %s() must be called with %s instance '
-                                'as first argument (got %s instead)' %
-                                (f_name, func.im_class.__name__, got))
+                got = args and ("%s instance" % type(args[0]).__name__) or "nothing"
+                raise TypeError(
+                    "unbound method %s() must be called with %s instance "
+                    "as first argument (got %s instead)" % (f_name, func.im_class.__name__, got)
+                )
         num_args = len(args)
         has_kwds = bool(kwds)
         num_spec_args = len(spec_args)
         num_defaults = len(defaults or ())
         # get the expected arguments passed positionally
-        arg2value.update(izip(spec_args,args))
+        arg2value.update(izip(spec_args, args))
         # get the expected arguments passed by name
         for arg in spec_args:
             if arg in kwds:
                 if arg in arg2value:
-                    raise TypeError("%s() got multiple values for keyword "
-                                    "argument '%s'" % (f_name, arg))
+                    raise TypeError(
+                        "%s() got multiple values for keyword " "argument '%s'" % (f_name, arg)
+                    )
                 else:
                     arg2value[arg] = kwds.pop(arg)
         # fill in any missing values with the defaults
         if defaults:
-            for arg, val in izip(spec_args[-num_defaults:],defaults):
+            for arg, val in izip(spec_args[-num_defaults:], defaults):
                 if arg not in arg2value:
                     arg2value[arg] = val
         # ensure that all required args have a value
         for arg in spec_args:
             if arg not in arg2value:
                 num_required = num_spec_args - num_defaults
-                raise TypeError('%s() takes at least %d %s argument%s (%d given)'
-                                % (f_name, num_required,
-                                   has_kwds and 'non-keyword ' or '',
-                                   num_required > 1 and 's' or '', num_args))
+                raise TypeError(
+                    "%s() takes at least %d %s argument%s (%d given)"
+                    % (
+                        f_name,
+                        num_required,
+                        has_kwds and "non-keyword " or "",
+                        num_required > 1 and "s" or "",
+                        num_args,
+                    )
+                )
         # handle any remaining named arguments
         if varkw:
             arg2value[varkw] = kwds
         elif kwds:
-            raise TypeError("%s() got an unexpected keyword argument '%s'" %
-                            (f_name, iter(kwds).next()))
+            raise TypeError(
+                "%s() got an unexpected keyword argument '%s'"
+                % (f_name, iter(kwds).next())  # noqa: B305
+            )
         # handle any remaining positional arguments
         if varargs:
             if num_args > num_spec_args:
-                arg2value[varargs] = args[-(num_args-num_spec_args):]
+                offset = -(num_args - num_spec_args)
+                arg2value[varargs] = args[offset:]
             else:
                 arg2value[varargs] = ()
         elif num_spec_args < num_args:
-            raise TypeError('%s() takes %s %d argument%s (%d given)' %
-                            (f_name, defaults and 'at most' or 'exactly',
-                             num_spec_args, num_spec_args > 1 and 's' or '', num_args))
+            raise TypeError(
+                "%s() takes %s %d argument%s (%d given)"
+                % (
+                    f_name,
+                    defaults and "at most" or "exactly",
+                    num_spec_args,
+                    num_spec_args > 1 and "s" or "",
+                    num_args,
+                )
+            )
         return arg2value
