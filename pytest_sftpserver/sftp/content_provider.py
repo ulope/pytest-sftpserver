@@ -1,8 +1,7 @@
 # encoding: utf-8
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
-from six import string_types, binary_type, integer_types
+from __future__ import absolute_import, division, print_function
+
+from six import binary_type, integer_types, string_types
 
 
 class ContentProvider(object):

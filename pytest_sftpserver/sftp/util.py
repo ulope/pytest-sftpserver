@@ -1,11 +1,10 @@
 # encoding: utf-8
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
-from functools import wraps
-from pytest_sftpserver.compat import getcallargs
 import posixpath
+from functools import wraps
+
+from pytest_sftpserver.compat import getcallargs
 
 
 def _mkabspath(path):

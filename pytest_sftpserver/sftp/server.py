@@ -1,23 +1,24 @@
 # encoding: utf-8
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+from __future__ import absolute_import, division, print_function
+
+from contextlib import contextmanager
+from threading import Event, Thread
+from time import sleep
+
+from paramiko import sftp_server
+from paramiko.rsakey import RSAKey
+from paramiko.transport import Transport
+
+from pytest_sftpserver.consts import SERVER_KEY_PRIVATE
+from pytest_sftpserver.sftp.content_provider import ContentProvider
+from pytest_sftpserver.sftp.interface import AllowAllAuthHandler, VirtualSFTPServerInterface
 
 try:
     from SocketServer import StreamRequestHandler, TCPServer, ThreadingMixIn
 except ImportError:
     from socketserver import StreamRequestHandler, TCPServer, ThreadingMixIn
-from contextlib import contextmanager
-from threading import Thread, Event
-from time import sleep
 
-from paramiko.rsakey import RSAKey
-from paramiko import sftp_server
-from paramiko.transport import Transport
 
-from pytest_sftpserver.consts import SERVER_KEY_PRIVATE
-from pytest_sftpserver.sftp.content_provider import ContentProvider
-from pytest_sftpserver.sftp.interface import VirtualSFTPServerInterface, AllowAllAuthHandler
 
 
 class SFTPRequestHandler(StreamRequestHandler):

@@ -1,16 +1,14 @@
 # encoding: utf-8
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 import calendar
-from datetime import datetime
-from os import O_CREAT
 import posixpath
 import stat
+from datetime import datetime
+from os import O_CREAT
 
-from paramiko import ServerInterface, AUTH_SUCCESSFUL, OPEN_SUCCEEDED
-from paramiko.sftp import SFTP_OK, SFTP_NO_SUCH_FILE, SFTP_FAILURE, SFTP_OP_UNSUPPORTED
+from paramiko import AUTH_SUCCESSFUL, OPEN_SUCCEEDED, ServerInterface
+from paramiko.sftp import SFTP_FAILURE, SFTP_NO_SUCH_FILE, SFTP_OK, SFTP_OP_UNSUPPORTED
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 from paramiko.sftp_si import SFTPServerInterface

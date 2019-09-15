@@ -1,7 +1,6 @@
 from copy import deepcopy
 from paramiko import Transport
 from paramiko.channel import Channel
-from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_client import SFTPClient
 import pytest
 import sys

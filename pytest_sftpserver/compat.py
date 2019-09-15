@@ -1,14 +1,11 @@
 # encoding: utf-8
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 try:
     from inspect import getcallargs
 except ImportError:
     from inspect import getargspec, ismethod
     from itertools import izip
-
 
     # getcallargs fallback for Python 2.6
     # Taken from http://code.activestate.com/recipes/551779/, slightly modified
