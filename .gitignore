@@ -2,3 +2,4 @@
 .coverage
 htmlcov_*
 coverage_*.xml
+.pytest_cache

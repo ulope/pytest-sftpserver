@@ -69,7 +69,7 @@ Supported Python versions
 
 This package supports the following Python versions:
 
-- 2.7, 3.4 - 3.6
+- 2.7, 3.5 - 3.7
 
 TODO
 ====
