@@ -5,16 +5,16 @@ pytest-sftpserver
 .. image:: https://img.shields.io/pypi/v/pytest-sftpserver.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: Latest Version
-.. image:: http://img.shields.io/travis/ulope/pytest-sftpserver.svg?branch=master&style=flat
-    :target: https://travis-ci.org/ulope/pytest-sftpserver
-    :alt: Build status
-.. image:: https://img.shields.io/coveralls/ulope/pytest-sftpserver.svg?branch=master&style=flat
-    :target: https://coveralls.io/r/ulope/pytest-sftpserver?branch=master
-    :alt: Code coverage
+.. image:: https://img.shields.io/circleci/build/gh/ulope/pytest-sftpserver/master
+    :alt: Circle CI build status
+    :target: https://circleci.com/gh/ulope/workflows/pytest-sftpserver
+.. image:: https://img.shields.io/codeclimate/coverage/ulope/pytest-sftpserver
+    :alt: Code Climate coverage
+    :target: https://codeclimate.com/github/ulope/pytest-sftpserver
 .. image:: https://img.shields.io/pypi/pyversions/pytest-sftpserver.svg?style=flat
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: Supported versions
-.. image:: https://img.shields.io/pypi/l/pytest-sftpserver.svg?style=flat
+.. image:: https://img.shields.io/pypi/l/pytest-sftpserver?style=flat&color=20d020
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: License
 .. image:: https://requires.io/github/ulope/pytest-sftpserver/requirements.svg?branch=master
