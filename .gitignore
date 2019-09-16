@@ -1,5 +1,5 @@
 .tox
-.coverage
-htmlcov_*
-coverage_*.xml
+.coverage*
+htmlcov*
+coverage*.xml
 .pytest_cache
