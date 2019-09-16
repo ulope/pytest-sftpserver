@@ -8,10 +8,11 @@ from datetime import datetime
 from os import O_CREAT
 
 from paramiko import AUTH_SUCCESSFUL, OPEN_SUCCEEDED, ServerInterface
-from paramiko.sftp import SFTP_FAILURE, SFTP_NO_SUCH_FILE, SFTP_OK, SFTP_OP_UNSUPPORTED
+from paramiko.sftp import SFTP_FAILURE, SFTP_NO_SUCH_FILE, SFTP_OK
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 from paramiko.sftp_si import SFTPServerInterface
+from six import string_types, text_type
 
 from pytest_sftpserver.sftp.util import abspath
 
@@ -35,9 +36,23 @@ class VirtualSFTPHandle(SFTPHandle):
         return SFTP_OK
 
     def write(self, offset, data):
-        if offset != 0:
-            return SFTP_OP_UNSUPPORTED
-        return SFTP_OK if self.content_provider.put(self.path, data) else SFTP_NO_SUCH_FILE
+        content = self.content_provider.get(self.path)
+
+        if content is None:
+            return SFTP_OK if self.content_provider.put(self.path, data) else SFTP_NO_SUCH_FILE
+
+        if not isinstance(content, string_types):
+            # Can't offset write into a 'directory' or integer
+            return SFTP_FAILURE
+
+        if isinstance(content, text_type):
+            content = content.encode()
+
+        if offset > len(content):
+            content = content + b"\x00" * (offset - len(content))
+
+        content = content[:offset] + data + content[offset + len(data) :]
+        return SFTP_OK if self.content_provider.put(self.path, content) else SFTP_FAILURE
 
     def read(self, offset, length):
         if self.content_provider.get(self.path) is None:
