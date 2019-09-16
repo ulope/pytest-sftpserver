@@ -82,6 +82,16 @@ TODO
 Version History
 ===============
 
+1.3.0 - 2019-09-16
+------------------
+- Updated supported Python versions to 2.7, 3.5 - 3.7.
+
+  Droped (official) support for 3.4.
+- Check / format code with ``black``, ``isort`` and ``flake8``.
+- Fix return type of ``.read()``. (#15, thanks @WeatherGod)
+- Support the ``offset`` parameter on write operations. (#11, #16, thanks @DrNecromant)
+
+
 1.2.0 - 2018-03-28
 ------------------
 
