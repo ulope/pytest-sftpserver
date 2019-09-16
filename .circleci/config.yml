@@ -1,0 +1,196 @@
+version: 2.1
+
+orbs:
+  codeclimate: rohanpm/codeclimate@1.0.0
+
+parameter-templates: &parameter-templates
+    py-version: &py-version-template
+      description: "Python version to be used in the executor"
+      default: "3.7"
+      type: enum
+      enum:
+        - "2.7"
+        - "3.4"
+        - "3.5"
+        - "3.6"
+        - "3.7"
+
+executors:
+  linux-docker:
+    parameters:
+      py-version:
+        <<: *py-version-template
+    working_directory: ~/pytest-sftpserver
+    environment:
+      PY_VERSION: << parameters.py-version >>
+      CC_TEST_REPORTER_ID: a5d30104a199142891dfdc6a6e2280d45df4d684f0ea215e8a4b354d66bf665c
+    docker:
+      - image: circleci/python:<< parameters.py-version >>
+
+jobs:
+  prepare:
+    executor:
+      name: linux-docker
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: "~"
+          paths:
+            - pytest-sftpserver
+
+  lint:
+    parameters:
+      py-version:
+        <<: *py-version-template
+      skip-black:
+        description: "Skip running black on old Python versions"
+        type: boolean
+        default: false
+    executor:
+      name: linux-docker
+      py-version: << parameters.py-version >>
+    steps:
+      - attach_workspace:
+          at: "~"
+      - restore_cache:
+          keys:
+            - v1-pip-cache-<< parameters.py-version >>-{{ checksum "requirements-dev.txt" }}
+            - v1-pip-cache-<< parameters.py-version >>-
+      - run:
+          name: Install deps
+          command: |
+            pip install --user -r requirements-dev.txt
+            echo 'export PATH=~/.local/bin:${PATH}' >> ${BASH_ENV}
+      - when:
+          name: Workaround for black on old Python versions
+          condition: << parameters.skip-black >>
+          steps:
+            - run:
+                name: Link dummy black
+                command: ln -s /bin/true ~/.local/bin/black
+      - run:
+          name: Lint
+          command: make lint
+      - save_cache:
+          key: v1-pip-cache-<< parameters.py-version >>-{{ checksum "requirements-dev.txt" }}
+          paths:
+            - "~/.cache/pip"
+
+  test:
+    parameters:
+      py-version:
+        <<: *py-version-template
+    executor:
+      name: linux-docker
+      py-version: << parameters.py-version >>
+    steps:
+      - attach_workspace:
+          at: "~"
+      - codeclimate/install_cc_test_reporter
+      - run:
+          name: Set Python version
+          command: 'echo "export TOXENV=py${PY_VERSION/./}" >> ${BASH_ENV}'
+      - restore_cache:
+          keys:
+            - v1-pip-cache-<< parameters.py-version >>-{{ checksum "requirements-dev.txt" }}
+            - v1-pip-cache-<< parameters.py-version >>-
+      - run:
+          name: Install deps
+          command: |
+            pip install --user tox
+            echo 'export PATH=~/.local/bin:${PATH}' >> ${BASH_ENV}
+      - restore_cache:
+          keys:
+            - v1-tox-<< parameters.py-version >>-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}
+            - v1-tox-<< parameters.py-version >>-
+      - run:
+          name: Prepare Code Climate
+          command: cc-test-reporter before-build
+      - run:
+          name: Run tests
+          command: tox
+      - save_cache:
+          key: v1-tox-<< parameters.py-version >>-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}
+          paths:
+            - "~/pytest-sftpserver/.tox"
+      - persist_to_workspace:
+          root: "~"
+          paths:
+            - "pytest-sftpserver/.coverage.*"
+
+  finalize:
+    executor:
+      name: linux-docker
+    steps:
+      - attach_workspace:
+          at: "~"
+      - codeclimate/install_cc_test_reporter
+      - run:
+          name: Install coverage
+          command: |
+            pip install --user coverage
+            echo 'export PATH=~/.local/bin:${PATH}' >> ${BASH_ENV}
+      - run:
+          name: Merge coverage
+          command: |
+            coverage combine
+            coverage xml
+      - run:
+          name: Report to Code Climate
+          command: cc-test-reporter after-build
+
+workflows:
+  pr:
+    jobs:
+      - prepare
+
+      - lint:
+          name: lint-2.7
+          py-version: "2.7"
+          skip-black: true
+          requires:
+            - prepare
+      - lint:
+          name: lint-3.5
+          py-version: "3.5"
+          skip-black: true
+          requires:
+            - prepare
+      - lint:
+          name: lint-3.6
+          py-version: "3.6"
+          requires:
+            - prepare
+      - lint:
+          name: lint-3.7
+          py-version: "3.7"
+          requires:
+            - prepare
+
+      - test:
+          name: test-2.7
+          py-version: "2.7"
+          requires:
+            - lint-2.7
+      - test:
+          name: test-3.5
+          py-version: "3.5"
+          requires:
+            - lint-3.5
+      - test:
+          name: test-3.6
+          py-version: "3.6"
+          requires:
+            - lint-3.6
+      - test:
+          name: test-3.7
+          py-version: "3.7"
+          requires:
+            - lint-3.7
+
+      - finalize:
+          requires:
+            - test-2.7
+            - test-3.5
+            - test-3.6
+            - test-3.7
