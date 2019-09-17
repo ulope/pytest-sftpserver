@@ -163,6 +163,10 @@ class ContentProvider(object):
         try:
             return len(self.get(path, atime_change=False))
         except TypeError:
+            # This casting to string is ok. If the value was a binary string
+            # then we wouldn't have a TypeError anyway. This is just to
+            # cast non-string-likes into a string to get a usable length.
+            # FIXME: maybe report the data's memory size?
             return len(str(self.get(path, atime_change=False)))
 
     def get_times(self, path):
