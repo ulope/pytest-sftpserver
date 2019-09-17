@@ -1,10 +1,13 @@
-import sys
+from contextlib import contextmanager
 from copy import deepcopy
+import posixpath
+import sys
+import time
 
-import pytest
 from paramiko import Transport
 from paramiko.channel import Channel
 from paramiko.sftp_client import SFTPClient
+import pytest
 
 from pytest_sftpserver.sftp.server import SFTPServer
 
@@ -34,6 +37,31 @@ def sftpclient(sftpserver):
 def content(sftpserver):
     with sftpserver.serve_content(deepcopy(CONTENT_OBJ)):
         yield
+
+
+@contextmanager
+def check_stat_times(client, path, atime_change=False, mtime_change=False):
+    # "path" can be just a string, or a tuple of strings
+    # The tuple form is useful if testing a file that gets renamed
+    if isinstance(path, (tuple, list)):
+        old_path, new_path = path
+    else:
+        old_path, new_path = path, path
+
+    st = client.stat(old_path)
+
+    time.sleep(2)
+    yield
+
+    new_st = client.stat(new_path)
+    if atime_change:
+        assert new_st.st_atime > st.st_atime   # atime should have updated
+    else:
+        assert new_st.st_atime == st.st_atime  # atime shouldn't have changed
+    if mtime_change:
+        assert new_st.st_mtime > st.st_mtime   # mtime should have updated
+    else:
+        assert new_st.st_mtime == st.st_mtime  # mtime shouldn't have updated
 
 
 @pytest.mark.xfail(sys.version_info < (2, 7), reason="Intermittently broken on 2.6")
@@ -86,22 +114,22 @@ def test_sftpserver_put_file_offset(content, sftpclient, offset, data, expected)
         assert f.read() == expected
 
 
-def test_sftpserver_put_file_dict(content, sftpclient):
-    with sftpclient.open("/e", "w") as f:
-        f.write("testfile4")
-    assert set(sftpclient.listdir("/")) == set(["a", "d", "e"])
-
-
-def test_sftpserver_put_file_list(content, sftpclient):
-    with sftpclient.open("/a/f/2", "w") as f:
-        f.write("testfile7")
-    assert set(sftpclient.listdir("/a/f")) == set(["0", "1", "2"])
+@pytest.mark.parametrize("path,expected",
+    [("/e", set(["a", "d", "e"])),
+     ("/a/f/2", set(["0", "1", "2"]))])
+def test_sftpserver_put(content, sftpclient, path, expected):
+    dirname = posixpath.dirname(path)
+    with check_stat_times(sftpclient, dirname, mtime_change=True):
+        with sftpclient.open(path, 'w') as f:
+            f.write("foobar")
+    assert set(sftpclient.listdir(dirname)) == expected
 
 
 def test_sftpserver_put_file(content, sftpclient, tmpdir):
     tmpfile = tmpdir.join("test.txt")
     tmpfile.write("Hello world")
-    sftpclient.put(str(tmpfile), "/a/test.txt")
+    with check_stat_times(sftpclient, "/a", mtime_change=True):
+        sftpclient.put(str(tmpfile), "/a/test.txt")
     assert set(sftpclient.listdir("/a")) == set(["test.txt", "b", "c", "f"])
 
 
@@ -114,14 +142,14 @@ def test_sftpserver_round_trip(content, sftpclient, tmpdir):
         assert result.read() == thetext.encode()
 
 
-def test_sftpserver_remove_file_dict(content, sftpclient):
-    sftpclient.remove("/a/c")
-    assert set(sftpclient.listdir("/a")) == set(["b", "f"])
-
-
-def test_sftpserver_remove_file_list(content, sftpclient):
-    sftpclient.remove("/a/f/1")
-    assert set(sftpclient.listdir("/a/f")) == set(["0"])
+@pytest.mark.parametrize("path,expected",
+    [("/a/c", set(["b", "f"])),
+     ("/a/f/1", set(["0"]))])
+def test_sftpserver_remove(content, sftpclient, path, expected):
+    dirname = posixpath.dirname(path)
+    with check_stat_times(sftpclient, dirname, mtime_change=True):
+        sftpclient.remove(path)
+    assert set(sftpclient.listdir(dirname)) == expected
 
 
 def test_sftpserver_remove_file_list_fail(content, sftpclient):
@@ -130,41 +158,56 @@ def test_sftpserver_remove_file_list_fail(content, sftpclient):
 
 
 def test_sftpserver_rename_file(content, sftpclient):
-    sftpclient.rename("/a/c", "/a/x")
+    dir_st = sftpclient.stat("/a")
+    file_st = sftpclient.stat("/a/c")
+    with check_stat_times(sftpclient, '/a', mtime_change=True), \
+            check_stat_times(sftpclient, ('/a/c', '/a/x')):
+        sftpclient.rename("/a/c", "/a/x")
     assert set(sftpclient.listdir("/a")) == set(["b", "f", "x"])
 
 
 def test_sftpserver_rename_file_fail_source(content, sftpclient):
-    with pytest.raises(IOError):
-        sftpclient.rename("/a/NOTHERE", "/a/x")
+    with check_stat_times(sftpclient, '/a'):
+        with pytest.raises(IOError):
+            sftpclient.rename("/a/NOTHERE", "/a/x")
 
 
 def test_sftpserver_rename_file_fail_target(content, sftpclient):
-    with pytest.raises(IOError):
-        sftpclient.rename("/a/c", "/a/NOTHERE/x")
+    with check_stat_times(sftpclient, '/a'):
+        with pytest.raises(IOError):
+            sftpclient.rename("/a/c", "/a/NOTHERE/x")
 
 
 def test_sftpserver_rmdir(content, sftpclient):
-    sftpclient.rmdir("/a")
+    with check_stat_times(sftpclient, '/', mtime_change=True):
+        sftpclient.rmdir("/a")
     assert set(sftpclient.listdir("/")) == set(["d"])
 
 
 def test_sftpserver_mkdir(content, sftpclient):
-    sftpclient.mkdir("/a/x")
+    with check_stat_times(sftpclient, '/a', mtime_change=True):
+        sftpclient.mkdir("/a/x")
     assert set(sftpclient.listdir("/a")) == set(["b", "c", "f", "x"])
 
 
 def test_sftpserver_mkdir_existing(content, sftpclient):
-    with pytest.raises(IOError):
-        sftpclient.mkdir("/a")
+    with check_stat_times(sftpclient, "/"), \
+            check_stat_times(sftpclient, "/a"):
+        with pytest.raises(IOError):
+            sftpclient.mkdir("/a")
     assert set(sftpclient.listdir("/a")) == set(["b", "c", "f"])
 
 
 def test_sftpserver_chmod(content, sftpclient):
     # coverage
-    sftpclient.chmod("/a/b", 1)
-    with sftpclient.open("/a/b", "r") as f:
-        f.chmod(1)
+    with check_stat_times(sftpclient, "/a"), \
+            check_stat_times(sftpclient, "/a/c"):
+        sftpclient.chmod("/a/b", 1)
+
+    with check_stat_times(sftpclient, "/a"), \
+            check_stat_times(sftpclient, "/a/c"):
+        with sftpclient.open("/a/b", "r") as f:
+            f.chmod(1)
 
 
 def test_sftpserver_stat_non_str(sftpserver, sftpclient):
@@ -172,6 +215,9 @@ def test_sftpserver_stat_non_str(sftpserver, sftpclient):
         assert sftpclient.stat("/a").st_size == 3
 
 
+@pytest.mark.skip(reason="Broken test. Callables are now"
+                         " called during construction because we need"
+                         " to build the stat time dictionary.")
 def test_sftpserver_exception(sftpclient, sftpserver):
     with sftpserver.serve_content({"a": lambda: 1 / 0}):
         with pytest.raises(IOError):

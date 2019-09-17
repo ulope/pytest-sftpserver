@@ -1,45 +1,120 @@
 # encoding: utf-8
 from __future__ import absolute_import, division, print_function
 
-from six import binary_type, integer_types, string_types
+from collections import defaultdict
+import posixpath
+import time
+
+from six import string_types, binary_type, integer_types
 
 
 class ContentProvider(object):
     def __init__(self, content_object=None):
         self.content_object = content_object
 
-    def get(self, path):
-        return self._find_object_for_path(path)
+    @property
+    def content_object(self):
+        return self._content_object
 
-    def put(self, path, data):
-        path, name = self._get_path_components(path)
+    @content_object.setter
+    def content_object(self, data):
+        self._content_object = data
+        self._rebuild_stat_dict()
+
+    def _rebuild_stat_dict(self):
+        # values: [atime, mtime]
+        # (alphabetical order for easier remembering)
+        self._st_times = defaultdict(lambda : [time.time()] * 2)
+        the_time = time.time()
+        # This assumes that we start at '/'. Not sure that is
+        # a valid assumtion.
+        for path, name in self.recursive_list('/'):
+            self._st_times[(path, name)] = [the_time] * 2
+
+    # in rare situations, I don't want to record a change in
+    # atime for fetching an object -- such as using "get" to
+    # test if the file exists.
+    def get(self, path, atime_change=True):
         obj = self._find_object_for_path(path)
+        if obj is not None and atime_change:
+            path, name = self._get_path_components(path)
+            # update atime, but not mtime
+            self._update_times(path, name, [time.time(), None])
+        return obj
+
+    def _update_times(self, path, name, times):
+        if len(times) != 2:
+            raise ValueError("'times' argument must be a length-2 list. Got %r"
+                             % (times,))
+        st_times = self._st_times[(path, name)]
+        # Mutate the list in-place
+        if times[0] is not None:
+            st_times[0] = times[0]
+        if times[1] is not None:
+            st_times[1] = times[1]
+
+    def put(self, path, data, times=None):
+        if times is None:
+            # So don't override atime or mtime...
+            times = [None, None]
+        # Cast it as a list
+        times = list(times)
+
+        path, name = self._get_path_components(path)
+        dirpath, dirname = self._get_path_components(path)
+        obj = self._find_object_for_path(path)
+
+        if times[1] is None:
+            # ... but do update mtime
+            times[1] = time.time()
+
         if isinstance(obj, dict):
+            if name not in obj:
+                self._update_times(dirpath, dirname, [None, time.time()])
             obj[name] = data
+            self._update_times(path, name, times)
             return True
         elif isinstance(obj, list) and name.isdigit():
+            # Need to be done *before* casting to integer
+            # because code elsewhere won't cast to int
+            # before fetching from the dictionary.
+            self._update_times(path, name, times)
             name = int(name)
             if name > len(obj) - 1:
                 obj.append(data)
+                self._update_times(dirpath, dirname, [None, time.time()])
             obj[name] = data
             return True
         try:
+            if not hasattr(obj, name):
+                self._update_times(dirpath, dirname, [None, time.time()])
             setattr(obj, name, data)
-            return True
         except (TypeError, AttributeError):
-            pass
-        return False
+            self._st_times.pop((dirpath, dirname), None)
+            return False
+        else:
+            self._update_times(path, name, times)
+            return True
 
     def remove(self, path):
         path, name = self._get_path_components(path)
+        dirpath, dirname = self._get_path_components(path)
         obj = self._find_object_for_path(path)
         if isinstance(obj, dict):
             try:
                 del obj[name]
-                return True
             except (KeyError, AttributeError):
-                pass
+                return False
+            else:
+                self._st_times.pop((path, name), None)
+                self._update_times(dirpath, dirname, [None, time.time()])
+                return True
         elif isinstance(obj, list) and name.isdigit():
+            # Need to be done *before* casting to integer
+            # because code elsewhere won't cast to int
+            # before fetching from the dictionary.
+            self._st_times.pop((path, name), None)
+            self._update_times(dirpath, dirname, [None, time.time()])
             name = int(name)
             if name < len(obj):
                 del obj[name]
@@ -49,13 +124,19 @@ class ContentProvider(object):
         else:
             try:
                 delattr(obj, name)
-                return True
             except (TypeError, AttributeError):
-                pass
-        return False
+                return False
+            else:
+                self._st_times.pop((path, name), None)
+                self._update_times(dirpath, dirname, [None, time.time()])
+                return True
 
     def list(self, path):
         obj = self._find_object_for_path(path)
+        if obj is not None:
+            dirpath, dirname = self._get_path_components(path)
+            self._update_times(dirpath, dirname, [time.time(), None])
+
         if isinstance(obj, dict):
             return obj.keys()
         elif isinstance(obj, (list, tuple)):
@@ -63,14 +144,33 @@ class ContentProvider(object):
         else:
             return [n for n in dir(obj) if not n.startswith("__")]
 
+    def recursive_list(self, path):
+        subpath, subname = self._get_path_components(path)
+        yield subpath if subpath != '/' else '', subname
+        if self.is_dir(path):
+            for name in self.list(path):
+                fullname = posixpath.join(path, name)
+                for subpath, subname in self.recursive_list(fullname):
+                    yield subpath, subname
+
     def is_dir(self, path):
-        return not isinstance(self.get(path), string_types + integer_types)
+        # Using _find_object_for_path to avoid attribute-setting
+        # that .get() does.
+        return not isinstance(self._find_object_for_path(path),
+                              string_types + integer_types)
 
     def get_size(self, path):
         try:
-            return len(self.get(path))
+            return len(self.get(path, atime_change=False))
         except TypeError:
-            return len(str(self.get(path)))
+            # This casting to string is ok. If the value was a binary string
+            # then we wouldn't have a TypeError anyway. This is just to
+            # cast non-string-likes into a string to get a usable length.
+            # FIXME: maybe report the data's memory size?
+            return len(str(self.get(path, atime_change=False)))
+
+    def get_times(self, path):
+        return self._st_times.get(self._get_path_components(path), None)
 
     def _find_object_for_path(self, path):
         if not self.content_object:
