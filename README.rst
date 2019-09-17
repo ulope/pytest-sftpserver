@@ -17,9 +17,9 @@ pytest-sftpserver
 .. image:: https://img.shields.io/pypi/l/pytest-sftpserver?style=flat&color=20d020
     :target: https://pypi.python.org/pypi/pytest-sftpserver/
     :alt: License
-.. image:: https://requires.io/github/ulope/pytest-sftpserver/requirements.svg?branch=master
-     :target: https://requires.io/github/ulope/pytest-sftpserver/requirements/?branch=master
-     :alt: Requirements Status
+.. image:: https://pyup.io/repos/github/ulope/pytest-sftpserver/shield.svg
+    :target: https://pyup.io/repos/github/ulope/pytest-sftpserver/
+    :alt: Requirements
 
 pytest-sftpserver is a plugin for `pytest`_ that provides a local SFTP-Server
 `fixture`_.
