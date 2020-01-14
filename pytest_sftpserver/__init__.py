@@ -1,3 +1,5 @@
+from pytest_sftpserver.decorator import sftpserver_factory  # noqa: F401
+
 VERSION = (1, 3, 0)
 
 
