@@ -6,6 +6,7 @@ from paramiko import Transport
 from paramiko.channel import Channel
 from paramiko.sftp_client import SFTPClient
 
+from pytest_sftpserver import sftpserver_factory
 from pytest_sftpserver.sftp.server import SFTPServer
 
 # fmt: off
@@ -188,3 +189,8 @@ def test_sftpserver_chmod_non_existing(sftpclient, sftpserver):
     with sftpserver.serve_content({}):
         with pytest.raises(IOError):
             sftpclient.chmod("/a", 600)
+
+
+@sftpserver_factory()
+def test_decorator(sftpserver):
+    assert isinstance(sftpserver, SFTPServer)

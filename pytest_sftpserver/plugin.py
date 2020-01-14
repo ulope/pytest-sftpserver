@@ -3,15 +3,10 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pytest_sftpserver.sftp.server import SFTPServer
+from pytest_sftpserver.decorator import sftpserver_factory
 
 
 @pytest.yield_fixture(scope="session")
 def sftpserver(request):
-    server = SFTPServer()
-    server.start()
-
-    yield server
-
-    if server.is_alive():
-        server.shutdown()
+    with sftpserver_factory() as server:
+        yield server

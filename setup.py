@@ -1,7 +1,25 @@
+import codecs
+import os
+import re
+
 from setuptools import setup, find_packages, Command
 
+here = os.path.abspath(os.path.dirname(__file__))
 
-version = __import__('pytest_sftpserver').get_version()
+
+def read(*parts):
+    with codecs.open(os.path.join(here, *parts), 'r') as fp:
+        return fp.read()
+
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(
+        r"^VERSION = \(([^\)]*)\)", version_file, re.M
+    )
+    if version_match:
+        return '.'.join(i.strip() for i in version_match.group(1).split(','))
+    raise RuntimeError('Unable to find version string.')
 
 
 class Test(Command):
@@ -23,7 +41,7 @@ with open("README.rst", "r") as readme:
 
 setup(
     name='pytest-sftpserver',
-    version=version,
+    version=find_version('pytest_sftpserver', '__version__.py'),
     author='Ulrich Petri',
     author_email='mail@ulo.pe',
     license='MIT License',

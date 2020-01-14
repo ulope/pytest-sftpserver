@@ -57,6 +57,17 @@ simply by adding a parameter named `sftpserver` to your test function:
 As can be seen from this example `sftpserver` serves content directly from
 python objects instead of files.
 
+It is also possible to use the package without `pytest`:
+
+.. code-block:: python
+
+    from pytest_sftpserver import sftpserver_factory
+
+    @sftpserver_factory()
+    def test_sftp_fetch(sftpserver):
+        with sftpserver.serve_content({'a_dir': {'somefile.txt': "File content"}}):
+            assert get_sftp_file(sftpserver.host, sftpserver.port, "user",
+                                 "pw", "/a_dir/somefile.txt") == "File content"
 
 Installation
 ============
