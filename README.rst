@@ -63,7 +63,7 @@ It is also possible to use the package without `pytest`:
 
     from pytest_sftpserver import sftpserver_factory
 
-    @sftpserver_factory
+    @sftpserver_factory()
     def test_sftp_fetch(sftpserver):
         with sftpserver.serve_content({'a_dir': {'somefile.txt': "File content"}}):
             assert get_sftp_file(sftpserver.host, sftpserver.port, "user",
