@@ -104,6 +104,7 @@ def test_sftpserver_put_file(content, sftpclient, tmpdir):
     sftpclient.put(str(tmpfile), "/a/test.txt")
     assert set(sftpclient.listdir("/a")) == set(["test.txt", "b", "c", "f"])
 
+
 def test_sftpserver_put_file_existing(content, sftpclient, tmpdir):
     tmpfile = tmpdir.join("test.txt")
     tmpfile.write("old content")

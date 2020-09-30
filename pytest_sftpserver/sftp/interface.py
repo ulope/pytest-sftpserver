@@ -41,7 +41,7 @@ class VirtualSFTPHandle(SFTPHandle):
         if content is None:
             return SFTP_OK if self.content_provider.put(self.path, data) else SFTP_NO_SUCH_FILE
 
-        if not isinstance(content, (string_types, binary_type)):
+        if not isinstance(content, string_types + (binary_type,)):
             # Can't offset write into a 'directory' or integer
             return SFTP_FAILURE
 
