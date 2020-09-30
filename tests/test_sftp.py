@@ -105,6 +105,18 @@ def test_sftpserver_put_file(content, sftpclient, tmpdir):
     assert set(sftpclient.listdir("/a")) == set(["test.txt", "b", "c", "f"])
 
 
+def test_sftpserver_put_existing_file(content, sftpclient, tmpdir):
+    tmpfile = tmpdir.join("test.txt")
+    tmpfile.write("old content")
+    sftpclient.put(str(tmpfile), "/test.txt")
+
+    tmpfile.write("new content")
+    sftpclient.put(str(tmpfile), "/test.txt")
+
+    with sftpclient.open("/test.txt") as f:
+        assert f.read() == "new content".encode()
+
+
 def test_sftpserver_round_trip(content, sftpclient, tmpdir):
     tmpfile = tmpdir.join("test.txt")
     thetext = u"Just some plain, normal text"
