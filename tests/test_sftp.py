@@ -112,8 +112,8 @@ def test_sftpserver_put_file_existing(content, sftpclient, tmpdir):
     tmpfile.write("new content")
     sftpclient.put(str(tmpfile), "/test.txt")
 
-    with sftpclient.open("/test.txt") as asp:
-        assert asp.read() == "new content".encode()
+    with sftpclient.open("/test.txt") as f:
+        assert f.read() == "new content".encode()
 
 
 def test_sftpserver_round_trip(content, sftpclient, tmpdir):
