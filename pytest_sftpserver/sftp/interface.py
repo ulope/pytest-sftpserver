@@ -12,7 +12,7 @@ from paramiko.sftp import SFTP_FAILURE, SFTP_NO_SUCH_FILE, SFTP_OK
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 from paramiko.sftp_si import SFTPServerInterface
-from six import string_types, text_type, binary_type
+from six import binary_type, string_types, text_type
 
 from pytest_sftpserver.sftp.util import abspath
 
