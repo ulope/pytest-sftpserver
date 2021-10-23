@@ -15,3 +15,4 @@ def sftpserver(request):
 
     if server.is_alive():
         server.shutdown()
+    server.server_close()
