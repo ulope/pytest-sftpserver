@@ -3,4 +3,6 @@ flake8==3.7.8
 flake8-bugbear==19.8.0;python_version>="3.5"
 flake8-tuple==0.4.0
 isort==4.3.21
+paramiko==2.10.3
+pytest==7.1.1
 tox
