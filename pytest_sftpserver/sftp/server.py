@@ -19,7 +19,7 @@ except ImportError:
     from socketserver import StreamRequestHandler, TCPServer, ThreadingMixIn
 
 
-class SFTPRequestHandler(StreamRequestHandler):   
+class SFTPRequestHandler(StreamRequestHandler):
     def handle(self):
         transport = Transport(self.request)
         transport.add_server_key(self.host_key)
