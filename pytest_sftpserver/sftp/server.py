@@ -19,7 +19,7 @@ except ImportError:
     from socketserver import StreamRequestHandler, TCPServer, ThreadingMixIn
 
 
-class SFTPRequestHandler(StreamRequestHandler):
+class SFTPRequestHandler(StreamRequestHandler):   
     def handle(self):
         transport = Transport(self.request)
         transport.add_server_key(self.host_key)
@@ -43,7 +43,10 @@ class SFTPRequestHandler(StreamRequestHandler):
         return RSAKey.from_private_key_file(SERVER_KEY_PRIVATE)
 
 
-class SFTPServer(Thread, ThreadingMixIn, TCPServer):
+class SFTPServer(Thread, ThreadingMixIn, TCPServer):   
+    daemon_threads = True
+    block_on_close = False
+    
     def __init__(self, content_object=None, content_provider_class=ContentProvider):
         self.content_provider = content_provider_class(content_object)
         TCPServer.__init__(self, ("127.0.0.1", 0), SFTPRequestHandler, False)
