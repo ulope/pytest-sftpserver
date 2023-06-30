@@ -24,6 +24,7 @@ _CONTENT_OBJ = dict(
         f=["testfile5", "testfile6"]
     ),
     d="testfile3",
+    g=b"testfile7",
     o=_TestObj(),
 )
 # fmt: on
@@ -107,7 +108,7 @@ def test_remove_obj_fail(content_provider):
 
 
 def test_list_root(content_provider):
-    assert set(content_provider.list("/")) == set(["a", "d", "o"])
+    assert set(content_provider.list("/")) == set(["a", "d", "g", "o"])
 
 
 def test_list_sub(content_provider):
@@ -120,6 +121,7 @@ def test_is_dir(content_provider):
     assert content_provider.is_dir("/a")
     assert content_provider.is_dir("/a/f")
     assert content_provider.is_dir("/o")
+    assert not content_provider.is_dir("/g")
     assert not content_provider.is_dir("/d")
 
 

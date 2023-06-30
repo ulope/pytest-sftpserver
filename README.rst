@@ -82,6 +82,12 @@ TODO
 Version History
 ===============
 
+1.3.1 - unreleased
+------------------
+
+- Fix ``is_dir`` under Python 3 no longer returning ``True`` for files with binary content. (#23, thanks @icemac)
+
+
 1.3.0 - 2019-09-16
 ------------------
 - Updated supported Python versions to 2.7, 3.5 - 3.7.
