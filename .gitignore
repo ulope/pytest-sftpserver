@@ -1,5 +1,8 @@
-.tox
+__pycache__
 .coverage*
-htmlcov*
-coverage*.xml
 .pytest_cache
+.tox
+*.egg-info
+*.pyc
+coverage*.xml
+htmlcov*

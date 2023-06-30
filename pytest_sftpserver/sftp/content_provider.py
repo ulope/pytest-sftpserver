@@ -64,7 +64,7 @@ class ContentProvider(object):
             return [n for n in dir(obj) if not n.startswith("__")]
 
     def is_dir(self, path):
-        return not isinstance(self.get(path), string_types + integer_types)
+        return not isinstance(self.get(path), (binary_type,) + string_types + integer_types)
 
     def get_size(self, path):
         try:
