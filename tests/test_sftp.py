@@ -20,7 +20,7 @@ CONTENT_OBJ = dict(
 # fmt: on
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def sftpclient(sftpserver):
     transport = Transport((sftpserver.host, sftpserver.port))
     transport.connect(username="a", password="b")
@@ -30,7 +30,7 @@ def sftpclient(sftpserver):
     transport.close()
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def content(sftpserver):
     with sftpserver.serve_content(deepcopy(CONTENT_OBJ)):
         yield
