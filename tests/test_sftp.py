@@ -32,8 +32,9 @@ def sftpclient(sftpserver):
 
 @pytest.yield_fixture
 def content(sftpserver):
-    with sftpserver.serve_content(deepcopy(CONTENT_OBJ)):
-        yield
+    actual_content = deepcopy(CONTENT_OBJ)
+    with sftpserver.serve_content(actual_content):
+        yield actual_content
 
 
 @pytest.mark.xfail(sys.version_info < (2, 7), reason="Intermittently broken on 2.6")
@@ -103,6 +104,14 @@ def test_sftpserver_put_file(content, sftpclient, tmpdir):
     tmpfile.write("Hello world")
     sftpclient.put(str(tmpfile), "/a/test.txt")
     assert set(sftpclient.listdir("/a")) == set(["test.txt", "b", "c", "f"])
+
+
+def test_sftpserver_put_bigger_file(content, sftpclient, tmpdir):
+    tmpfile = tmpdir.join("test.txt")
+    file_size = 40000
+    tmpfile.write("x" * file_size)
+    sftpclient.put(str(tmpfile), "/a/test.txt")
+    assert len(content["a"]["test.txt"]) == file_size
 
 
 def test_sftpserver_round_trip(content, sftpclient, tmpdir):
